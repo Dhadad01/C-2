@@ -28,7 +28,7 @@ Node *node_aloc (char *name, int quantity)
   }
   node->right_child = NULL;
   node->left_child = NULL;
-  char* new_name = malloc (sizeof (strlen (name)) + 1);
+  char* new_name = malloc (strlen (name) + 1);
   if (!new_name)
   {
     free_Node(node);
@@ -90,6 +90,18 @@ Node *add_product (Node *root, char *name, int quantity)
   {
     return node_aloc (name,quantity);
   }
+  else if(!root->product.name){
+      char* new_name = malloc (strlen (name) + 1);
+      if (!new_name)
+      {
+          return NULL;
+      }
+      strcpy (new_name, name);
+
+      root->product.name = new_name;
+      root->product.quantity = quantity;
+
+  }
   return add_product_helper (root, name, quantity, root);
 }
 
@@ -136,6 +148,7 @@ Node *build_bst (const char *filename)
   {
     root = get_input (line, root);
   }
+  fclose(in);
   return root;
 }
 
@@ -154,24 +167,28 @@ Node *find_min (Node *root)
 //add possible that there is no father
 Node *find_father (Node *root, char *name)
 {
-  if (root->left_child && root->right_child)
-  {
-    if (!strcmp (root->left_child->product.name, name) || (
-        !strcmp (root->right_child->product.name, name)))
-    {
+    int cmp = strcmp(name,root->product.name);
+  if((!root->left_child&&!root->left_child)||!cmp){
       return root;
-    }
-    else if (strcmp (root->product.name, name) > 0)
-    {
-      find_father (root->right_child, name);
-    }
-    else if (strcmp (root->product.name, name) < 0)
-    {
-      find_father (root->left_child, name);
-    }
   }
-  return root;
+
+  if(!root->left_child&&cmp>0){
+      return find_father(root->right_child,name);
+  }
+  else if(!root->right_child&&cmp<0){
+      return find_father(root->right_child,name);
+  }
+  //has 2 kids
+  else{
+      if(cmp>0){
+          return find_father(root->right_child,name);
+      }
+      else{
+          return find_father(root->left_child,name);
+      }
+  }
 }
+
 void swap (Node *p1, Node *p2)
 {
   Product temp = p1->product;
@@ -214,8 +231,12 @@ void del_one_kid (Node *root, char *name)
 //should get a pointer to root of father Node of the one we should erase
 void del_without_kids (Node *root, char *name)
 {
-
-  if (!strcmp (root->left_child->product.name, name))
+  if (!strcmp (root->product.name, name))
+  {
+      free_Node(root);
+      root = NULL;
+  }
+  else if (!strcmp (root->left_child->product.name, name))
   {
     free_Node(root->left_child);
     root->left_child = NULL;
@@ -226,6 +247,7 @@ void del_without_kids (Node *root, char *name)
     root->right_child = NULL;
   }
 }
+
 void free_Node (Node *node)
 {
   free (node->product.name);
@@ -246,7 +268,9 @@ void delete_tree (Node *root)
     {
       delete_tree (root->right_child);
     }
-    free_Node (root);
+    if(root->product.name){
+        free_Node (root);
+    }
     root = NULL;
   }
 }
@@ -259,6 +283,11 @@ Node *delete_product_helper (Node *root, char *name, Node *real_root)
 {
   Node *sub_tree_1 = find_father (root, name);
   //has no kids
+  if ((!sub_tree_1->right_child) && (!sub_tree_1->left_child
+      )){
+    del_without_kids (sub_tree_1, name);
+    return real_root;
+  }
   if ((!sub_tree_1->right_child->left_child) && (!sub_tree_1->right_child
       ->right_child))
   {
@@ -293,6 +322,7 @@ Node *delete_product_helper (Node *root, char *name, Node *real_root)
       swap (min_sub_tree, sub_tree_1->left_child);
       delete_product_helper (sub_tree_1, min_sub_tree->product.name,
                              real_root);
+      //??
     }
   }
 }
