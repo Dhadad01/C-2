@@ -45,6 +45,7 @@ Node *node_aloc (char *name, int quantity)
 Node *add_product_helper (Node *root, char *name, int quantity, Node
 *real_root)
 {
+
   int compare = strcmp (name, root->product.name);
   if (!compare)
   {
@@ -56,6 +57,7 @@ Node *add_product_helper (Node *root, char *name, int quantity, Node
     Node *new_node = node_aloc (name,quantity);
     if (compare > 0 && new_node)
     {
+
       root->right_child = new_node;
     }
     else if (compare < 0 && new_node)
@@ -65,10 +67,20 @@ Node *add_product_helper (Node *root, char *name, int quantity, Node
   }
   if (compare > 0)
   {
+    if(!root->right_child){
+      Node *new_node = node_aloc (name,quantity);
+      root->right_child = new_node;
+      return real_root;
+    }
     add_product_helper (root->right_child, name, quantity, real_root);
   }
   else
   {
+    if(!root->left_child){
+      Node *new_node = node_aloc (name,quantity);
+      root->left_child = new_node;
+      return real_root;
+    }
     add_product_helper (root->left_child, name, quantity, real_root);
   }
 }
@@ -100,7 +112,6 @@ Node *add_product (Node *root, char *name, int quantity)
 
       root->product.name = new_name;
       root->product.quantity = quantity;
-
   }
   return add_product_helper (root, name, quantity, root);
 }
@@ -167,19 +178,23 @@ Node *find_min (Node *root)
 //add possible that there is no father
 Node *find_father (Node *root, char *name)
 {
-    int cmp = strcmp(name,root->product.name);
-  if((!root->left_child&&!root->left_child)||!cmp){
+  int cmp = strcmp(name,root->product.name);
+  if((!root->right_child&&!root->left_child)||!cmp){
       return root;
   }
 
   if(!root->left_child&&cmp>0){
-      return find_father(root->right_child,name);
+      return find_father(root->left_child,name);
   }
   else if(!root->right_child&&cmp<0){
       return find_father(root->right_child,name);
   }
   //has 2 kids
   else{
+    if(!strcmp (name,root->right_child->product.name)||
+    !strcmp (name,root->right_child->product.name)){
+      return root;
+    }
       if(cmp>0){
           return find_father(root->right_child,name);
       }
@@ -353,6 +368,9 @@ Product *search_product (Node *root, char *name)
 Node *update_quantity (Node *root, char *name, int amount_to_update)
 {
   Node *p1 = find_father (root, name);
+  if(amount_to_update<0){
+      return root;
+  }
   if (root == p1)
   {
     root->product.quantity += amount_to_update;
