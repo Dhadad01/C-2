@@ -14,7 +14,7 @@ int name_aloc (char *name, char *dest);
 Node *get_input (char *line, Node *root);
 Node *node_aloc (char *name, int quantity);
 void swap (Node *p1, Node *p2);
-Node *delete_product_helper (Node *root, char *name, Node *real_root);
+Node *delete_product_helper (Node *root, char *name, Node *real_root,int kids);
 Node *add_product_helper (Node *root, char *name, int quantity, Node
 *real_root);
 void del_without_kids (Node *root, char *name);
@@ -192,11 +192,11 @@ Node *find_father (Node *root, char *name)
 
   if (!root->left_child && cmp > EQUAL)
   {
-    return find_father (root->left_child, name);
+    return find_father (root->right_child, name);
   }
   else if (!root->right_child && cmp < EQUAL)
   {
-    return find_father (root->right_child, name);
+    return find_father (root->left_child, name);
   }
     //has 2 kids
   else
@@ -235,7 +235,7 @@ void del_one_kid (Node *root, char *name)
 
       root->left_child = root->left_child->left_child;
     }
-    else if (root->left_child->left_child)
+    else if (root->left_child->right_child)
     {
       root->left_child = root->left_child->right_child;
     }
@@ -264,6 +264,8 @@ void del_without_kids (Node *root, char *name)
   if (!strcmp (root->product.name, name))
   {
     free_Node(root);
+    root->right_child=NULL;
+    root->left_child = NULL;
     root = NULL;
   }
   else if (!strcmp (root->left_child->product.name, name))
@@ -275,6 +277,7 @@ void del_without_kids (Node *root, char *name)
   {
     free_Node(root->right_child);
     root->right_child = NULL;
+
   }
 }
 
@@ -290,9 +293,9 @@ void delete_tree (Node *root)
 {
   if(root){
     delete_tree (root->left_child);
-    root->right_child=NULL;
-    delete_tree (root->right_child);
     root->left_child=NULL;
+    delete_tree (root->right_child);
+    root->right_child=NULL;
     free (root->product.name);
     root->product.name=NULL;
     free (root);
@@ -303,17 +306,24 @@ void delete_tree (Node *root)
 
 Node *delete_product (Node *root, char *name)
 {
-  return delete_product_helper (root, name, root);
+  return delete_product_helper (root, name, root,0);
 }
-Node *delete_product_helper (Node *root, char *name, Node *real_root)
+Node *delete_product_helper (Node *root, char *name, Node *real_root,int
+kids)
 {
+
   Node *sub_tree_1 = find_father (root, name);
+
+  if(kids==2){
+  sub_tree_1 = find_father (root->right_child, name);
+  }
+
   //has no kids
   int cmp = strcmp (name, sub_tree_1->product.name);
   if ((!sub_tree_1->right_child->right_child) &&
       (!sub_tree_1->right_child->left_child
       ) && cmp > 0)
-  {
+  {//TODO its in here somwhere!!
     del_without_kids (sub_tree_1, name);
     return real_root;
   }
@@ -335,6 +345,15 @@ Node *delete_product_helper (Node *root, char *name, Node *real_root)
     //has 2 kids
   else
   {
+    if(!cmp){
+      Node *min_sub_tree =
+          find_min (sub_tree_1->right_child);
+      swap (min_sub_tree, sub_tree_1);
+      int kids = 2;
+      delete_product_helper (sub_tree_1, min_sub_tree->product.name,
+                             real_root,kids);
+      return real_root;
+    }
     if (sub_tree_1->right_child)
     {
       if (!strcmp (sub_tree_1->right_child->product.name, name))
@@ -342,8 +361,10 @@ Node *delete_product_helper (Node *root, char *name, Node *real_root)
         Node *min_sub_tree =
             find_min (sub_tree_1->right_child->right_child);
         swap (min_sub_tree, sub_tree_1->right_child);
+        int kids = 2;
         delete_product_helper (sub_tree_1, min_sub_tree->product.name,
-                               real_root);
+                               real_root,kids);
+        return real_root;
       }
     }
     else
@@ -351,8 +372,10 @@ Node *delete_product_helper (Node *root, char *name, Node *real_root)
       Node *min_sub_tree =
           find_min (sub_tree_1->left_child->right_child);
       swap (min_sub_tree, sub_tree_1->left_child);
+      int kids = 2;
       delete_product_helper (sub_tree_1, min_sub_tree->product.name,
-                             real_root);
+                             real_root,kids);
+      return real_root;
       //??
     }
   }
@@ -384,25 +407,45 @@ Product *search_product (Node *root, char *name)
 Node *update_quantity (Node *root, char *name, int amount_to_update)
 {
   Node *p1 = find_father (root, name);
-  if (amount_to_update < 0)
-  {
-    fprintf (stderr,
-             INVALID_QUANTITY);
-    return root;
+  int cmp = strcmp (name,p1->product.name);
+  if(cmp>0){
+    if(p1->right_child->product.quantity+amount_to_update>0){
+      p1->right_child->product.quantity += amount_to_update;
+      return root;
+    }
+    else if(p1->right_child->product.quantity+amount_to_update==0){
+      return delete_product (root,name);
+    }
+    else if(p1->right_child->product.quantity+amount_to_update<0){
+      fprintf(stderr,INVALID_QUANTITY);
+      return root;
+    }
+
   }
-  if (root == p1)
-  {
-    root->product.quantity += amount_to_update;
-    return root;
+  else if(!cmp){
+    if(p1->product.quantity+amount_to_update>0){
+      p1->right_child->product.quantity += amount_to_update;
+      return root;
+    }
+    else if(p1->product.quantity+amount_to_update==0){
+      return delete_product (root,name);
+    }
+    else if(p1->product.quantity+amount_to_update<0){
+      fprintf(stderr,INVALID_QUANTITY);
+      return root;
+    }
   }
-  if (!strcmp (p1->left_child->product.name, name))
-  {
-    p1->left_child->product.quantity += amount_to_update;
-    return root;
+  else if(cmp<0){
+    if(p1->left_child->product.quantity+amount_to_update>0){
+      p1->left_child->product.quantity += amount_to_update;
+      return root;
+    }
+    else if(p1->left_child->product.quantity+amount_to_update==0){
+      return delete_product (root,name);
+    }
+    else if(p1->left_child->product.quantity+amount_to_update<0){
+      fprintf(stderr,INVALID_QUANTITY);
+      return root;
   }
-  else
-  {
-    p1->right_child->product.quantity += amount_to_update;
-    return root;
   }
 }
