@@ -90,7 +90,6 @@ Node *add_product_helper (Node *root, char *name, int quantity, Node
     }
     add_product_helper (root->left_child, name, quantity, real_root);
   }
-  return NULL;
 }
 
 Node *add_product (Node *root, char *name, int quantity)
