@@ -364,7 +364,6 @@ kids)
       return real_root;
     }
   }
-  return NULL;
 }
 void two_kids_helper_3 (Node *real_root, Node *sub_tree_1)
 {
@@ -417,7 +416,6 @@ Product *search_product (Node *root, char *name)
   {
     search_product (root->left_child, name);
   }
-  return NULL;
 }
 
 Node *update_quantity (Node *root, char *name, int amount_to_update)
@@ -463,7 +461,6 @@ Node *update_quantity (Node *root, char *name, int amount_to_update)
   {
     return get_node (root, name, amount_to_update, p1);
   }
-  return NULL;
 }
 
 Node *get_node (Node *root, char *name, int amount_to_update, Node *p1)
@@ -482,5 +479,4 @@ Node *get_node (Node *root, char *name, int amount_to_update, Node *p1)
     fprintf (stderr, INVALID_QUANTITY);
     return root;
   }
-  return NULL;
 }
