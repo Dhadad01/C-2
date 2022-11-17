@@ -90,7 +90,6 @@ Node *add_product_helper (Node *root, char *name, int quantity, Node
     }
     add_product_helper (root->left_child, name, quantity, real_root);
   }
-  return real_root;
 }
 
 Node *add_product (Node *root, char *name, int quantity)
@@ -363,7 +362,6 @@ kids)
       two_kids_helper (real_root, sub_tree_1);
       return real_root;
     }
-    return real_root;
   }
 }
 void two_kids_helper_3 (Node *real_root, Node *sub_tree_1)
@@ -417,7 +415,6 @@ Product *search_product (Node *root, char *name)
   {
     search_product (root->left_child, name);
   }
-  return root;
 }
 
 Node *update_quantity (Node *root, char *name, int amount_to_update)
@@ -463,7 +460,6 @@ Node *update_quantity (Node *root, char *name, int amount_to_update)
   {
     return get_node (root, name, amount_to_update, p1);
   }
-  return root;
 }
 
 Node *get_node (Node *root, char *name, int amount_to_update, Node *p1)
@@ -477,7 +473,7 @@ Node *get_node (Node *root, char *name, int amount_to_update, Node *p1)
   {
     return delete_product (root, name);
   }
-  else (p1->left_child->product.quantity + amount_to_update < 0)
+  else if (p1->left_child->product.quantity + amount_to_update < 0)
   {
     fprintf (stderr, INVALID_QUANTITY);
     return root;
